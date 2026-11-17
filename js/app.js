@@ -77,6 +77,10 @@ function labelColor() {
   return chartTheme === 'light' ? '#111827' : '#e2e8f0';
 }
 
+function chartFont() {
+  return 'Arial, Helvetica, sans-serif';
+}
+
 function sliceStroke() {
   return chartTheme === 'light' ? '#ffffff' : '#1e293b';
 }
@@ -86,8 +90,15 @@ function axisLineColor() {
 }
 
 function styleAxis(axis) {
-  axis.selectAll('text').attr('fill', labelColor()).attr('font-size', '11px');
+  axis.selectAll('text')
+    .attr('fill', labelColor())
+    .attr('font-size', chartTheme === 'light' ? '13px' : '11px')
+    .attr('font-family', chartFont());
   axis.selectAll('path, line').attr('stroke', axisLineColor());
+}
+
+function paint(selection, fill) {
+  selection.attr('fill', fill).style('fill', fill);
 }
 
 function showTooltip(event, title, value) {
@@ -122,8 +133,9 @@ function drawDonut(containerId, data, colors, animate) {
     .data(arcs)
     .enter()
     .append('path')
-    .attr('fill', (_, i) => colors[i])
+    .call((sel) => paint(sel, (_, i) => colors[i]))
     .attr('stroke', sliceStroke())
+    .style('stroke', sliceStroke())
     .attr('stroke-width', 2)
     .attr('d', (d) => arc({ startAngle: d.startAngle, endAngle: animate ? d.startAngle : d.endAngle }))
     .on('mouseover', function (event, d) {
@@ -149,7 +161,8 @@ function drawDonut(containerId, data, colors, animate) {
     .attr('text-anchor', 'middle')
     .attr('dy', '0.35em')
     .attr('fill', labelColor())
-    .attr('font-size', '18px')
+    .attr('font-family', chartFont())
+    .attr('font-size', chartTheme === 'light' ? '22px' : '18px')
     .attr('font-weight', '700')
     .text(animate ? 0 : total);
   if (animate) {
@@ -177,7 +190,7 @@ function drawBar(containerId, data, color, animate) {
   if (!container) return;
   container.replaceChildren();
   const full = container.clientWidth || 300;
-  if (full >= 520) drawHorizontalBar(container, data, color, full, animate);
+  if (chartTheme === 'light' || full >= 520) drawHorizontalBar(container, data, color, full, animate);
   else drawVerticalBar(container, data, color, full, animate);
 }
 
@@ -210,7 +223,7 @@ function drawVerticalBar(container, data, color, full, animate) {
     .attr('y', animate ? height : (d) => y(d.value))
     .attr('width', x.bandwidth())
     .attr('height', animate ? 0 : (d) => Math.max(0, height - y(d.value)))
-    .attr('fill', (d) => d.color || color)
+    .call((sel) => paint(sel, (d) => d.color || color))
     .attr('rx', 4);
   bindBarHover(bars);
   if (animate) {
@@ -255,7 +268,7 @@ function drawHorizontalBar(container, data, color, full, animate) {
     .attr('y', (d) => y(d.full || d.label))
     .attr('width', animate ? 0 : (d) => Math.max(0, x(d.value)))
     .attr('height', y.bandwidth())
-    .attr('fill', (d) => d.color || color)
+    .call((sel) => paint(sel, (d) => d.color || color))
     .attr('rx', 4);
   bindBarHover(bars);
   const values = svg.selectAll('.bar-value')
@@ -266,7 +279,8 @@ function drawHorizontalBar(container, data, color, full, animate) {
     .attr('y', (d) => y(d.full || d.label) + y.bandwidth() / 2)
     .attr('dominant-baseline', 'middle')
     .attr('fill', labelColor())
-    .attr('font-size', '12px')
+    .attr('font-family', chartFont())
+    .attr('font-size', chartTheme === 'light' ? '13px' : '12px')
     .attr('opacity', animate ? 0 : 1)
     .text((d) => d.value);
   if (animate) {
@@ -287,9 +301,11 @@ function drawHorizontalBar(container, data, color, full, animate) {
 function renderLegend(id, data, colors) {
   const el = document.getElementById(id);
   if (!el) return;
+  const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
   el.innerHTML = data.map((d, i) => {
     const name = escapeHtml(d.full || d.label);
-    return `<span class="legend-item"><span class="swatch" style="background:${colors[i]}"></span>${name} · ${d.value}</span>`;
+    const pct = Math.round((d.value / total) * 100);
+    return `<span class="legend-item"><span class="swatch" style="background-color:${colors[i]}"></span>${name} · ${d.value} (${pct}%)</span>`;
   }).join('');
 }
 
@@ -320,6 +336,54 @@ function applyVisibleTab() {
   document.querySelectorAll('.tab-content').forEach((el) => {
     el.classList.toggle('active', el.id === currentTab);
   });
+}
+
+function freezeCharts() {
+  const jobs = [...document.querySelectorAll('#report .chart-container svg')].map((svg) => {
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    const w = Math.ceil(svg.getBoundingClientRect().width) || Number(svg.getAttribute('width')) || 300;
+    const h = Math.ceil(svg.getBoundingClientRect().height) || Number(svg.getAttribute('height')) || 200;
+    clone.setAttribute('width', String(w));
+    clone.setAttribute('height', String(h));
+    const xml = new XMLSerializer().serializeToString(clone);
+    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
+    return new Promise((resolve) => {
+      const source = new Image();
+      source.onload = () => {
+        const scale = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+        const shot = new Image();
+        shot.alt = '';
+        shot.style.width = `${w}px`;
+        shot.style.height = `${h}px`;
+        shot.style.display = 'block';
+        shot.style.margin = '0 auto';
+        shot.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        shot.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        svg.replaceWith(shot);
+        shot.src = canvas.toDataURL('image/png');
+      };
+      source.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve();
+      };
+      source.src = url;
+    });
+  });
+  return Promise.all(jobs);
 }
 
 function restoreAfterExport(scrollY) {
@@ -358,12 +422,14 @@ async function telechargerPDF() {
   chartTheme = 'light';
   document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('active'));
   if (report) report.style.width = '800px';
+  renderLegends();
   redrawCharts();
+  await freezeCharts();
 
   const opt = {
-    margin: [10, 10, 16, 10],
+    margin: [12, 12, 16, 12],
     filename: 'sondage-club-2026.pdf',
-    image: { type: 'jpeg', quality: 0.98 },
+    image: { type: 'jpeg', quality: 1 },
     html2canvas: {
       scale: 2,
       backgroundColor: '#ffffff',

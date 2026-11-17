@@ -97,8 +97,11 @@
     .card h2, .q-block h3, .actions h3, .chart-title { color: #0c4a6e !important; }
     .actions { background: #f0f9ff !important; color: #111827 !important; }
     .bar-track { background: #e5e7eb !important; }
-    .legend, .subtitle, footer, footer .credit { color: #374151 !important; opacity: 1 !important; }
-    #detail { break-before: page; page-break-before: always; }
+    .legend, .legend-item, .subtitle, footer, footer .credit { color: #111827 !important; opacity: 1 !important; }
+    .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
+    .swatch { width: 0.9rem; height: 0.9rem; border: 1px solid rgba(17, 24, 39, 0.25); }
+    .grid { grid-template-columns: 1fr !important; }
+    #detail { break-before: page; page-break-before: always; display: block !important; }
     .theme, .q-block, .actions, .stat-card, .chart-block, .callout { break-inside: avoid; page-break-inside: avoid; }
     #detail .bar-fill { animation: none !important; transform: none !important; }
   }
@@ -122,10 +125,31 @@
   body.pdf-export .actions { background: #f0f9ff; color: #111827; }
   body.pdf-export .bar-track { background: #e5e7eb; }
   body.pdf-export .legend,
+  body.pdf-export .legend-item,
   body.pdf-export .subtitle,
   body.pdf-export footer,
-  body.pdf-export footer .credit { color: #374151; opacity: 1; }
-  body.pdf-export #detail { break-before: page; page-break-before: always; }
+  body.pdf-export footer .credit { color: #111827; opacity: 1; }
+  body.pdf-export .legend {
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: 0.35rem; margin-top: 0.7rem; font-size: 0.95rem; line-height: 1.35;
+  }
+  body.pdf-export .swatch { width: 0.9rem; height: 0.9rem; border: 1px solid rgba(17, 24, 39, 0.25); }
+  body.pdf-export .grid { grid-template-columns: 1fr; }
+  body.pdf-export .bar-row { font-size: 1rem; }
+  body.pdf-export .bar-track { height: 20px; }
+  body.pdf-export .stat-card:has(#chartSat),
+  body.pdf-export .stat-card:has(#chartMembre),
+  body.pdf-export .chart-block:has(#chartAge) {
+    display: grid; grid-template-columns: 240px minmax(0, 1fr);
+    column-gap: 1.2rem; align-items: center;
+  }
+  body.pdf-export .stat-card:has(#chartSat) > :not(.chart-container):not(.legend),
+  body.pdf-export .stat-card:has(#chartMembre) > :not(.chart-container):not(.legend),
+  body.pdf-export .chart-block:has(#chartAge) > :not(.chart-container):not(.legend) { grid-column: 1 / -1; }
+  body.pdf-export .stat-card:has(#chartSat) > .legend,
+  body.pdf-export .stat-card:has(#chartMembre) > .legend,
+  body.pdf-export .chart-block:has(#chartAge) > .legend { margin-top: 0; }
+  body.pdf-export #detail { break-before: page; page-break-before: always; display: block !important; }
   body.pdf-export .theme,
   body.pdf-export .q-block,
   body.pdf-export .actions,

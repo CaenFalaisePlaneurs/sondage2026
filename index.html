@@ -4,18 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sondage Club 2026 — Caen Falaise Planeurs</title>
-<script src="https://d3js.org/d3.v7.min.js">
-  };
-  html2pdf().set(opt).from(element).save();
-}
-
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
-  };
-  html2pdf().set(opt).from(element).save();
-}
-
-</script>
+<meta name="description" content="Synthèse anonyme des 33 réponses au sondage club 2026 de Caen Falaise Planeurs.">
+<meta property="og:title" content="Résultats du sondage club 2026 — Caen Falaise Planeurs">
+<meta property="og:description" content="Synthèse anonyme de 33 réponses : satisfaction, ambiance et pistes d’actions.">
+<meta property="og:type" content="website">
 <style>
   :root {
     --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #38bdf8; --good: #4ade80; --warn: #fbbf24; --bad: #f87171;
@@ -32,6 +24,10 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1.2rem; margin-bottom: 2rem; }
+  .stats-grid { container-type: inline-size; container-name: stats; }
+  @container stats (min-width: 660px) and (max-width: 998px) {
+    .stat-card:last-child { grid-column: 1 / -1; }
+  }
   .card { background: var(--card); border-radius: 12px; padding: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 1rem; }
   .card h2 { margin-top: 0; font-size: 1.2rem; color: var(--accent); }
   .stat { font-size: 2.2rem; font-weight: bold; color: var(--good); }
@@ -39,39 +35,116 @@
   .actions h3 { margin-top: 0; color: #7dd3fc; }
   ul { padding-left: 1.2rem; }
   li { margin-bottom: 0.4rem; }
-  .chart-container { width: 100%; height: 280px; overflow: hidden; max-width: 100%; }
+  .chart-container { width: 100%; max-width: 100%; }
+  .chart-container svg { display: block; margin: 0 auto; }
+  .chart-container svg text { font-family: system-ui, -apple-system, sans-serif; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; justify-content: center; margin-top: 0.35rem; font-size: 0.8rem; color: #cbd5e1; }
+  .legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .swatch { width: 0.65rem; height: 0.65rem; border-radius: 2px; flex-shrink: 0; }
+  .callout { background: #1e3a5f; }
+  .pdf-status { min-height: 1.25rem; margin: 0.55rem 0 0; font-size: 0.9rem; color: #e0f2fe; }
+  .pdf-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(15, 23, 42, 0.78); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; padding: 1rem; text-align: center; }
+  .pdf-overlay[hidden] { display: none !important; }
+  .pdf-btn:disabled { opacity: 0.65; cursor: progress; }
+  .tab:focus-visible, .pdf-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  #report { max-width: 1100px; margin: 0 auto; }
   .chart-title { text-align: center; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; }
-  footer { text-align: center; opacity: 0.6; font-size: 0.85rem; margin-top: 3rem; padding: 1rem; }
+  footer { text-align: center; font-size: 0.85rem; margin-top: 3rem; padding: 1rem; }
+  footer .credit { opacity: 0.6; margin: 0.35rem 0 0; }
   .theme { border-bottom: 1px solid #334155; padding: 1rem 0; }
   .theme:last-child { border: none; }
   .tooltip { position: absolute; background: #0f172a; color: white; padding: 8px 12px; border-radius: 6px; font-size: 13px; pointer-events: none; border: 1px solid #38bdf8; opacity: 0; }
   .q-block { margin-bottom: 1.5rem; }
   .q-block h3 { color: #7dd3fc; margin-bottom: 0.5rem; }
-  .bar-row { display: flex; align-items: center; margin: 0.3rem 0; font-size: 0.9rem; }
-  .bar-label { width: 180px; flex-shrink: 0; }
-  .bar-track { flex: 1; background: #334155; height: 18px; border-radius: 4px; overflow: hidden; }
-  .bar-fill { height: 100%; background: #38bdf8; }
-  .bar-value { width: 40px; text-align: right; margin-left: 8px; }
+  .bar-row { display: grid; grid-template-columns: minmax(9rem, 15rem) 1fr auto; gap: 0.35rem 0.6rem; align-items: center; margin: 0.35rem 0; font-size: 0.9rem; }
+  .bar-label { min-width: 0; line-height: 1.3; }
+  .bar-track { background: #334155; height: 18px; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: #38bdf8; transform-origin: left center; }
+  #detail.tab-content.active .bar-fill { animation: bar-grow 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  #detail.tab-content.active .bar-row:nth-child(3) .bar-fill { animation-delay: 40ms; }
+  #detail.tab-content.active .bar-row:nth-child(4) .bar-fill { animation-delay: 80ms; }
+  #detail.tab-content.active .bar-row:nth-child(5) .bar-fill { animation-delay: 120ms; }
+  #detail.tab-content.active .bar-row:nth-child(6) .bar-fill { animation-delay: 160ms; }
+  #detail.tab-content.active .bar-row:nth-child(7) .bar-fill { animation-delay: 200ms; }
+  @keyframes bar-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    #detail .bar-fill { animation: none !important; transform: none !important; }
+  }
+  .bar-fill.good { background: #4ade80; }
+  .bar-fill.mid { background: #fbbf24; }
+  .bar-fill.warn { background: #fb923c; }
+  .bar-fill.bad { background: #f87171; }
+  .bar-fill.neutral { background: #94a3b8; }
+  .bar-value { min-width: 1.5rem; text-align: right; }
+
+  @media (max-width: 640px) {
+    h1 { font-size: 1.4rem; }
+    .tabs { flex-wrap: wrap; }
+    .tab { flex: 1 1 auto; }
+    .bar-row { grid-template-columns: 1fr auto; }
+    .bar-label { grid-column: 1 / -1; }
+    .logo svg { width: 240px; }
+  }
 
   @media print {
-    body { background: white; color: black; padding: 0; }
-    header { background: white; color: black; }
-    .tabs, .pdf-btn, footer { display: none; }
-    .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
-    .logo svg { fill: #08003B; }
+    body { background: #fff !important; color: #111827 !important; padding: 0; }
+    header { background: #fff !important; color: #111827 !important; }
+    .tabs, .pdf-btn, .pdf-status, .pdf-overlay, .tooltip { display: none !important; }
+    .tab-content { display: block !important; }
+    .card, .callout { background: #fff !important; color: #111827 !important; box-shadow: none; border: 1px solid #ddd; }
     .logo svg path { fill: #08003B !important; }
+    .stat { color: #166534 !important; }
+    .card h2, .q-block h3, .actions h3, .chart-title { color: #0c4a6e !important; }
+    .actions { background: #f0f9ff !important; color: #111827 !important; }
+    .bar-track { background: #e5e7eb !important; }
+    .legend, .subtitle, footer, footer .credit { color: #374151 !important; opacity: 1 !important; }
+    #detail { break-before: page; page-break-before: always; }
+    .theme, .q-block, .actions, .stat-card, .chart-block, .callout { break-inside: avoid; page-break-inside: avoid; }
+    #detail .bar-fill { animation: none !important; transform: none !important; }
   }
+
+  body.pdf-export { background: #fff; color: #111827; padding: 0; }
+  body.pdf-export header { background: #fff; color: #0f172a; border: 1px solid #e5e7eb; }
+  body.pdf-export h1 { color: #0f172a; }
+  body.pdf-export .tabs,
+  body.pdf-export .pdf-btn,
+  body.pdf-export .pdf-status,
+  body.pdf-export .tooltip { display: none !important; }
+  body.pdf-export .tab-content { display: block !important; }
+  body.pdf-export .card,
+  body.pdf-export .callout { background: #fff !important; color: #111827 !important; box-shadow: none; border: 1px solid #e5e7eb; }
+  body.pdf-export .logo svg path { fill: #08003B !important; }
+  body.pdf-export .stat { color: #166534; }
+  body.pdf-export .card h2,
+  body.pdf-export .q-block h3,
+  body.pdf-export .actions h3,
+  body.pdf-export .chart-title { color: #0c4a6e; }
+  body.pdf-export .actions { background: #f0f9ff; color: #111827; }
+  body.pdf-export .bar-track { background: #e5e7eb; }
+  body.pdf-export .legend,
+  body.pdf-export .subtitle,
+  body.pdf-export footer,
+  body.pdf-export footer .credit { color: #374151; opacity: 1; }
+  body.pdf-export #detail { break-before: page; page-break-before: always; }
+  body.pdf-export .theme,
+  body.pdf-export .q-block,
+  body.pdf-export .actions,
+  body.pdf-export .stat-card,
+  body.pdf-export .chart-block,
+  body.pdf-export .callout { break-inside: avoid; page-break-inside: avoid; }
+  body.pdf-export #detail .bar-fill { animation: none !important; transform: none !important; }
   .pdf-btn { 
     background: #38bdf8; color: #0f172a; border: none; padding: 10px 16px;
     border-radius: 8px; font-weight: bold; cursor: pointer;
     display: inline-flex; align-items: center; gap: 8px; margin-top: 1rem;
   }
-  .pdf-btn svg { width: 18px; height: 18px; fill: currentColor; }
+  .pdf-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .pdf-btn:hover { background: #7dd3fc; }
 
 </style>
 </head>
 <body>
+<div id="report">
 <header>
   <div class="logo"><svg width="320" height="91" viewBox="0 0 2476 707" preserveAspectRatio="xMidYMid meet" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g >
@@ -88,44 +161,49 @@
   <div class="subtitle">33 réponses anonymisées</div>
 </header>
 
-<div class="tabs">
-  <button class="tab active" onclick="showTab('synthese')">Synthèse</a>
-  <button class="tab" onclick="showTab('detail')">Détail des questions</button>
+<div class="tabs" role="tablist">
+  <button type="button" class="tab active" role="tab" aria-selected="true" aria-controls="synthese" onclick="showTab('synthese', this)">Synthèse</button>
+  <button type="button" class="tab" role="tab" aria-selected="false" aria-controls="detail" onclick="showTab('detail', this)">Détail des questions</button>
 </div>
 
 <!-- ONGLET SYNTHÈSE -->
 <div id="synthese" class="tab-content active">
-  <div class="grid">
-    <div class="card">
+  <div class="grid stats-grid">
+    <div class="card stat-card">
       <h2>Satisfaction globale</h2>
       <div class="stat">85%</div>
       <p>Très ou plutôt satisfaits.</p>
       <div class="chart-container" id="chartSat"></div>
+      <div class="legend" id="legendSat"></div>
     </div>
-    <div class="card">
+    <div class="card stat-card">
       <h2>Sentiment d’appartenance</h2>
       <div class="stat">91%</div>
       <p>Se sentent pleinement ou plutôt membres.</p>
       <div class="chart-container" id="chartMembre"></div>
+      <div class="legend" id="legendMembre"></div>
     </div>
-    <div class="card">
+    <div class="card stat-card">
       <h2>Ambiance générale</h2>
       <div class="stat">82%</div>
       <p>Ambiance plutôt ou très bonne.</p>
       <div class="chart-container" id="chartAmbiance"></div>
+      <div class="legend" id="legendAmbiance"></div>
     </div>
   </div>
 
   <div class="card">
     <h2>Profil des répondants</h2>
     <div class="grid">
-      <div>
+      <div class="chart-block">
         <div class="chart-title">Répartition par tranche d’âge</div>
         <div class="chart-container" id="chartAge"></div>
+        <div class="legend" id="legendAge"></div>
       </div>
-      <div>
+      <div class="chart-block">
         <div class="chart-title">Fréquence de venue au club</div>
         <div class="chart-container" id="chartFreq"></div>
+        <div class="legend" id="legendFreq"></div>
       </div>
     </div>
   </div>
@@ -201,7 +279,7 @@
     </div>
   </div>
 
-  <div class="card" style="background: #1e3a5f;">
+  <div class="card callout">
     <h2>Votre retour a été entendu</h2>
     <p>Que vous ayez exprimé une grande satisfaction, un souhait d’amélioration précis, une difficulté personnelle, ou une idée originale, chaque contribution a été prise en compte dans cette synthèse. Les points les plus critiques ont été intégrés dans les pistes d’actions de façon constructive, sans exposer qui que ce soit.</p>
   </div>
@@ -215,11 +293,11 @@
 
     <div class="q-block">
       <h3>Tranche d’âge</h3>
-      <div class="bar-row"><span class="bar-label">61-80 ans</span><div class="bar-track"><div class="bar-fill" style="width:39%"></div></div><span class="bar-value">13</span></div>
-      <div class="bar-row"><span class="bar-label">18-25 ans</span><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><span class="bar-value">8</span></div>
-      <div class="bar-row"><span class="bar-label">41-60 ans</span><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><span class="bar-value">6</span></div>
       <div class="bar-row"><span class="bar-label">14-17 ans</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
+      <div class="bar-row"><span class="bar-label">18-25 ans</span><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><span class="bar-value">8</span></div>
       <div class="bar-row"><span class="bar-label">26-40 ans</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="bar-value">2</span></div>
+      <div class="bar-row"><span class="bar-label">41-60 ans</span><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><span class="bar-value">6</span></div>
+      <div class="bar-row"><span class="bar-label">61-80 ans</span><div class="bar-track"><div class="bar-fill" style="width:39%"></div></div><span class="bar-value">13</span></div>
     </div>
 
     <div class="q-block">
@@ -232,77 +310,77 @@
 
     <div class="q-block">
       <h3>Ancienneté au club</h3>
-      <div class="bar-row"><span class="bar-label">4-10 ans</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><span class="bar-value">10</span></div>
       <div class="bar-row"><span class="bar-label">Moins d’1 an</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-value">9</span></div>
       <div class="bar-row"><span class="bar-label">1-3 ans</span><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><span class="bar-value">6</span></div>
-      <div class="bar-row"><span class="bar-label">Plus de 20 ans</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-value">5</span></div>
+      <div class="bar-row"><span class="bar-label">4-10 ans</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><span class="bar-value">10</span></div>
       <div class="bar-row"><span class="bar-label">11-20 ans</span><div class="bar-track"><div class="bar-fill" style="width:9%"></div></div><span class="bar-value">3</span></div>
+      <div class="bar-row"><span class="bar-label">Plus de 20 ans</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-value">5</span></div>
     </div>
 
     <div class="q-block">
       <h3>Fréquence de venue</h3>
-      <div class="bar-row"><span class="bar-label">Quelques fois par an</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-value">9</span></div>
-      <div class="bar-row"><span class="bar-label">Plusieurs fois par semaine</span><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><span class="bar-value">8</span></div>
-      <div class="bar-row"><span class="bar-label">Une fois par semaine</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-value">5</span></div>
-      <div class="bar-row"><span class="bar-label">Très rarement</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
-      <div class="bar-row"><span class="bar-label">Quelques fois par mois</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
-      <div class="bar-row"><span class="bar-label">Presque tous les week-ends</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="bar-value">2</span></div>
+      <div class="bar-row"><span class="bar-label">Plusieurs fois par semaine</span><div class="bar-track"><div class="bar-fill good" style="width:24%"></div></div><span class="bar-value">8</span></div>
+      <div class="bar-row"><span class="bar-label">Presque tous les week-ends</span><div class="bar-track"><div class="bar-fill good" style="width:6%"></div></div><span class="bar-value">2</span></div>
+      <div class="bar-row"><span class="bar-label">Une fois par semaine</span><div class="bar-track"><div class="bar-fill mid" style="width:15%"></div></div><span class="bar-value">5</span></div>
+      <div class="bar-row"><span class="bar-label">Quelques fois par mois</span><div class="bar-track"><div class="bar-fill warn" style="width:12%"></div></div><span class="bar-value">4</span></div>
+      <div class="bar-row"><span class="bar-label">Quelques fois par an</span><div class="bar-track"><div class="bar-fill warn" style="width:27%"></div></div><span class="bar-value">9</span></div>
+      <div class="bar-row"><span class="bar-label">Très rarement</span><div class="bar-track"><div class="bar-fill bad" style="width:12%"></div></div><span class="bar-value">4</span></div>
     </div>
 
     <div class="q-block">
       <h3>Satisfaction globale</h3>
-      <div class="bar-row"><span class="bar-label">Très satisfait</span><div class="bar-track"><div class="bar-fill" style="width:52%"></div></div><span class="bar-value">17</span></div>
-      <div class="bar-row"><span class="bar-label">Plutôt satisfait</span><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><span class="bar-value">11</span></div>
-      <div class="bar-row"><span class="bar-label">Ni satisfait ni insatisfait</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
-      <div class="bar-row"><span class="bar-label">Plutôt insatisfait</span><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><span class="bar-value">1</span></div>
+      <div class="bar-row"><span class="bar-label">Très satisfait</span><div class="bar-track"><div class="bar-fill good" style="width:52%"></div></div><span class="bar-value">17</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt satisfait</span><div class="bar-track"><div class="bar-fill mid" style="width:33%"></div></div><span class="bar-value">11</span></div>
+      <div class="bar-row"><span class="bar-label">Ni satisfait ni insatisfait</span><div class="bar-track"><div class="bar-fill warn" style="width:12%"></div></div><span class="bar-value">4</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt insatisfait</span><div class="bar-track"><div class="bar-fill bad" style="width:3%"></div></div><span class="bar-value">1</span></div>
     </div>
 
     <div class="q-block">
       <h3>Sentiment d’être pleinement membre</h3>
-      <div class="bar-row"><span class="bar-label">Oui, tout à fait</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-value">18</span></div>
-      <div class="bar-row"><span class="bar-label">Plutôt oui</span><div class="bar-track"><div class="bar-fill" style="width:36%"></div></div><span class="bar-value">12</span></div>
-      <div class="bar-row"><span class="bar-label">Plutôt non</span><div class="bar-track"><div class="bar-fill" style="width:9%"></div></div><span class="bar-value">3</span></div>
+      <div class="bar-row"><span class="bar-label">Oui, tout à fait</span><div class="bar-track"><div class="bar-fill good" style="width:55%"></div></div><span class="bar-value">18</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt oui</span><div class="bar-track"><div class="bar-fill mid" style="width:36%"></div></div><span class="bar-value">12</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt non</span><div class="bar-track"><div class="bar-fill bad" style="width:9%"></div></div><span class="bar-value">3</span></div>
     </div>
 
     <div class="q-block">
       <h3>Liberté de proposer une idée ou un projet</h3>
-      <div class="bar-row"><span class="bar-label">Très libre</span><div class="bar-track"><div class="bar-fill" style="width:36%"></div></div><span class="bar-value">12</span></div>
-      <div class="bar-row"><span class="bar-label">Plutôt libre</span><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><span class="bar-value">11</span></div>
-      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
-      <div class="bar-row"><span class="bar-label">Peu libre</span><div class="bar-track"><div class="bar-fill" style="width:9%"></div></div><span class="bar-value">3</span></div>
-      <div class="bar-row"><span class="bar-label">Pas libre</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="bar-value">2</span></div>
+      <div class="bar-row"><span class="bar-label">Très libre</span><div class="bar-track"><div class="bar-fill good" style="width:36%"></div></div><span class="bar-value">12</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt libre</span><div class="bar-track"><div class="bar-fill mid" style="width:33%"></div></div><span class="bar-value">11</span></div>
+      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill neutral" style="width:12%"></div></div><span class="bar-value">4</span></div>
+      <div class="bar-row"><span class="bar-label">Peu libre</span><div class="bar-track"><div class="bar-fill warn" style="width:9%"></div></div><span class="bar-value">3</span></div>
+      <div class="bar-row"><span class="bar-label">Pas libre</span><div class="bar-track"><div class="bar-fill bad" style="width:6%"></div></div><span class="bar-value">2</span></div>
     </div>
 
     <div class="q-block">
       <h3>Communication interne</h3>
-      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill" style="width:39%"></div></div><span class="bar-value">13</span></div>
-      <div class="bar-row"><span class="bar-label">Satisfaisante</span><div class="bar-track"><div class="bar-fill" style="width:39%"></div></div><span class="bar-value">13</span></div>
-      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-value">5</span></div>
-      <div class="bar-row"><span class="bar-label">Mauvaise</span><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><span class="bar-value">1</span></div>
+      <div class="bar-row"><span class="bar-label">Satisfaisante</span><div class="bar-track"><div class="bar-fill good" style="width:39%"></div></div><span class="bar-value">13</span></div>
+      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill neutral" style="width:15%"></div></div><span class="bar-value">5</span></div>
+      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill warn" style="width:39%"></div></div><span class="bar-value">13</span></div>
+      <div class="bar-row"><span class="bar-label">Mauvaise</span><div class="bar-track"><div class="bar-fill bad" style="width:3%"></div></div><span class="bar-value">1</span></div>
     </div>
 
     <div class="q-block">
       <h3>Gouvernance et organisation</h3>
-      <div class="bar-row"><span class="bar-label">Satisfaisantes</span><div class="bar-track"><div class="bar-fill" style="width:58%"></div></div><span class="bar-value">19</span></div>
-      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill" style="width:21%"></div></div><span class="bar-value">7</span></div>
-      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><span class="bar-value">4</span></div>
-      <div class="bar-row"><span class="bar-label">Mauvaises</span><div class="bar-track"><div class="bar-fill" style="width:6%"></div></div><span class="bar-value">2</span></div>
+      <div class="bar-row"><span class="bar-label">Satisfaisantes</span><div class="bar-track"><div class="bar-fill good" style="width:58%"></div></div><span class="bar-value">19</span></div>
+      <div class="bar-row"><span class="bar-label">Sans avis</span><div class="bar-track"><div class="bar-fill neutral" style="width:12%"></div></div><span class="bar-value">4</span></div>
+      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill warn" style="width:21%"></div></div><span class="bar-value">7</span></div>
+      <div class="bar-row"><span class="bar-label">Mauvaises</span><div class="bar-track"><div class="bar-fill bad" style="width:6%"></div></div><span class="bar-value">2</span></div>
     </div>
 
     <div class="q-block">
       <h3>Ambiance générale</h3>
-      <div class="bar-row"><span class="bar-label">Plutôt bonne</span><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><span class="bar-value">18</span></div>
-      <div class="bar-row"><span class="bar-label">Très bonne</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-value">9</span></div>
-      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div><span class="bar-value">5</span></div>
-      <div class="bar-row"><span class="bar-label">Mauvaise</span><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><span class="bar-value">1</span></div>
+      <div class="bar-row"><span class="bar-label">Très bonne</span><div class="bar-track"><div class="bar-fill good" style="width:27%"></div></div><span class="bar-value">9</span></div>
+      <div class="bar-row"><span class="bar-label">Plutôt bonne</span><div class="bar-track"><div class="bar-fill mid" style="width:55%"></div></div><span class="bar-value">18</span></div>
+      <div class="bar-row"><span class="bar-label">À améliorer</span><div class="bar-track"><div class="bar-fill warn" style="width:15%"></div></div><span class="bar-value">5</span></div>
+      <div class="bar-row"><span class="bar-label">Mauvaise</span><div class="bar-track"><div class="bar-fill bad" style="width:3%"></div></div><span class="bar-value">1</span></div>
     </div>
 
     <div class="q-block">
       <h3>Prêt à s’investir davantage</h3>
-      <div class="bar-row"><span class="bar-label">Selon les besoins</span><div class="bar-track"><div class="bar-fill" style="width:30%"></div></div><span class="bar-value">10</span></div>
-      <div class="bar-row"><span class="bar-label">Non</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-value">9</span></div>
-      <div class="bar-row"><span class="bar-label">Ponctuellement</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-value">9</span></div>
-      <div class="bar-row"><span class="bar-label">Régulièrement</span><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><span class="bar-value">1</span></div>
+      <div class="bar-row"><span class="bar-label">Régulièrement</span><div class="bar-track"><div class="bar-fill good" style="width:3%"></div></div><span class="bar-value">1</span></div>
+      <div class="bar-row"><span class="bar-label">Selon les besoins</span><div class="bar-track"><div class="bar-fill mid" style="width:30%"></div></div><span class="bar-value">10</span></div>
+      <div class="bar-row"><span class="bar-label">Ponctuellement</span><div class="bar-track"><div class="bar-fill warn" style="width:27%"></div></div><span class="bar-value">9</span></div>
+      <div class="bar-row"><span class="bar-label">Non</span><div class="bar-track"><div class="bar-fill bad" style="width:27%"></div></div><span class="bar-value">9</span></div>
     </div>
 
     <div class="q-block">
@@ -321,195 +399,29 @@
 </div>
 
 <footer>
-  Synthèse anonyme réalisée à partir des 33 réponses du sondage 2026 — Caen Falaise Planeurs.<br>
-  Visualisations D3.js. Aucun texte libre n’a été reproduit tel quel.
-<a href="sondage-club-2026.pdf" download="sondage-club-2026.pdf" class="pdf-btn" style="text-decoration:none;">
-  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
-    <path d="M14 2v6h6"/>
-    <path d="M16 13H8"/>
-    <path d="M16 17H8"/>
-    <path d="M10 9H8"/>
-  </svg>
-  Télécharger en PDF
-</button>
+  <p class="credit">Synthèse anonyme réalisée à partir des 33 réponses du sondage 2026 — Caen Falaise Planeurs.<br>
+  Visualisations D3.js. Aucun texte libre n’a été reproduit tel quel.</p>
+  <button type="button" class="pdf-btn" id="pdfBtn" onclick="telechargerPDF()">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
+      <path d="M14 2v6h6"/>
+      <path d="M8 13h8"/>
+      <path d="M8 17h8"/>
+    </svg>
+    Télécharger en PDF
+  </button>
+  <p id="pdfStatus" class="pdf-status" role="status"></p>
 </footer>
+</div>
+
+<div id="pdfOverlay" class="pdf-overlay" hidden>
+  <p>Préparation du PDF…</p>
+</div>
 
 <div class="tooltip" id="tooltip"></div>
 
-<script>
-function showTab(id) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
-}
-
-const tooltip = d3.select("#tooltip");
-function showTooltip(event, text) {
-  tooltip.style("opacity", 1).html(text)
-    .style("left", (event.pageX + 10) + "px")
-    .style("top", (event.pageY - 28) + "px");
-}
-function hideTooltip() { tooltip.style("opacity", 0); }
-
-function drawDonut(containerId, data, colors) {
-  const container = d3.select("#" + containerId);
-  const width = container.node().clientWidth || 300;
-  const height = 280;
-  const radius = Math.min(width, height) / 2 - 10;
-  const svg = container.append("svg").attr("width", width).attr("height", height)
-    .append("g").attr("transform", `translate(${width/2},${height/2})`);
-  const pie = d3.pie().value(d => d.value);
-  const arc = d3.arc().innerRadius(radius * 0.55).outerRadius(radius);
-  svg.selectAll("path").data(pie(data)).enter().append("path")
-    .attr("d", arc).attr("fill", (d, i) => colors[i])
-    .attr("stroke", "#0f172a").attr("stroke-width", 2)
-    .on("mouseover", function(event, d) {
-      d3.select(this).attr("opacity", 0.8);
-      showTooltip(event, `<strong>${d.data.label}</strong><br>${d.data.value} réponses`);
-    })
-    .on("mouseout", function() { d3.select(this).attr("opacity", 1); hideTooltip(); });
-  svg.append("text").attr("text-anchor", "middle").attr("dy", "0.35em")
-    .attr("fill", "#e2e8f0").attr("font-size", "18px").attr("font-weight", "bold")
-    .text(d3.sum(data, d => d.value));
-}
-
-function drawBar(containerId, data, color) {
-  const container = d3.select("#" + containerId);
-  const margin = {top: 10, right: 10, bottom: 70, left: 40};
-  const width = (container.node().clientWidth || 300) - margin.left - margin.right;
-  const height = 280 - margin.top - margin.bottom;
-  const svg = container.append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-  const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, width]).padding(0.2);
-  const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value)]).nice().range([height, 0]);
-  svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x))
-    .selectAll("text").attr("transform", "rotate(-35)").style("text-anchor", "end")
-    .attr("fill", "#e2e8f0").attr("font-size", "11px");
-  svg.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("text").attr("fill", "#e2e8f0");
-  svg.selectAll(".bar").data(data).enter().append("rect")
-    .attr("x", d => x(d.label)).attr("y", d => y(d.value))
-    .attr("width", x.bandwidth()).attr("height", d => height - y(d.value))
-    .attr("fill", color).attr("rx", 4)
-    .on("mouseover", function(event, d) {
-      d3.select(this).attr("opacity", 0.8);
-      showTooltip(event, `<strong>${d.label}</strong><br>${d.value} réponses`);
-    })
-    .on("mouseout", function() { d3.select(this).attr("opacity", 1); hideTooltip(); });
-}
-
-const satData = [{label:"Très satisfait",value:17},{label:"Plutôt satisfait",value:11},{label:"Neutre",value:4},{label:"Plutôt insatisfait",value:1}];
-drawDonut("chartSat", satData, ["#4ade80","#86efac","#fbbf24","#f87171"]);
-
-const membreData = [{label:"Tout à fait",value:18},{label:"Plutôt oui",value:12},{label:"Plutôt non",value:3}];
-drawDonut("chartMembre", membreData, ["#4ade80","#86efac","#fbbf24"]);
-
-const ambianceData = [{label:"Très bonne",value:9},{label:"Plutôt bonne",value:18},{label:"À améliorer",value:5},{label:"Mauvaise",value:1}];
-drawBar("chartAmbiance", ambianceData, "#38bdf8");
-
-const ageData = [{label:"61-80",value:13},{label:"18-25",value:8},{label:"41-60",value:6},{label:"14-17",value:4},{label:"26-40",value:2}];
-drawDonut("chartAge", ageData, ["#38bdf8","#818cf8","#c084fc","#f472b6","#fb7185"]);
-
-const freqData = [{label:"Quelques/an",value:9},{label:"Plusieurs/sem",value:8},{label:"1/semaine",value:5},{label:"Très rare",value:4},{label:"Quelques/mois",value:4},{label:"Presque WE",value:2}];
-drawBar("chartFreq", freqData, "#818cf8");
-
-// Ensure charts draw after layout
-setTimeout(() => {
-  document.querySelectorAll('.chart-container').forEach(el => el.innerHTML = '');
-  drawDonut("chartSat", satData, ["#4ade80","#86efac","#fbbf24","#f87171"]);
-  drawDonut("chartMembre", membreData, ["#4ade80","#86efac","#fbbf24"]);
-  drawBar("chartAmbiance", ambianceData, "#38bdf8");
-  drawDonut("chartAge", ageData, ["#38bdf8","#818cf8","#c084fc","#f472b6","#fb7185"]);
-  drawBar("chartFreq", freqData, "#818cf8");
-}, 500);
-
-// Redraw on resize for mobile
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    document.querySelectorAll('.chart-container').forEach(el => el.innerHTML = '');
-    drawDonut("chartSat", satData, ["#4ade80","#86efac","#fbbf24","#f87171"]);
-    drawDonut("chartMembre", membreData, ["#4ade80","#86efac","#fbbf24"]);
-    drawBar("chartAmbiance", ambianceData, "#38bdf8");
-    drawDonut("chartAge", ageData, ["#38bdf8","#818cf8","#c084fc","#f472b6","#fb7185"]);
-    drawBar("chartFreq", freqData, "#818cf8");
-
-// Ensure charts draw after layout
-setTimeout(() => {
-  document.querySelectorAll('.chart-container').forEach(el => el.innerHTML = '');
-  drawDonut("chartSat", satData, ["#4ade80","#86efac","#fbbf24","#f87171"]);
-  drawDonut("chartMembre", membreData, ["#4ade80","#86efac","#fbbf24"]);
-  drawBar("chartAmbiance", ambianceData, "#38bdf8");
-  drawDonut("chartAge", ageData, ["#38bdf8","#818cf8","#c084fc","#f472b6","#fb7185"]);
-  drawBar("chartFreq", freqData, "#818cf8");
-}, 500);
-  }, 150);
-});
-
-  };
-  html2pdf().set(opt).from(element).save();
-}
-
-</script>
-
-
-
-
-<script>
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    try {
-      document.querySelectorAll('.chart-container').forEach(el => el.innerHTML = '');
-      
-      function drawDonut(containerId, data, colors) {
-        const container = d3.select("#" + containerId);
-        const width = container.node().clientWidth || 300;
-        const height = 280;
-        const radius = Math.min(width, height) / 2 - 10;
-        const svg = container.append("svg").attr("width", width).attr("height", height)
-          .append("g").attr("transform", `translate(${width/2},${height/2})`);
-        const pie = d3.pie().value(d => d.value);
-        const arc = d3.arc().innerRadius(radius * 0.55).outerRadius(radius);
-        svg.selectAll("path").data(pie(data)).enter().append("path")
-          .attr("d", arc).attr("fill", (d, i) => colors[i])
-          .attr("stroke", "#ffffff").attr("stroke-width", 2);
-      }
-      
-      function drawBar(containerId, data, color) {
-        const container = d3.select("#" + containerId);
-        const margin = {top: 10, right: 10, bottom: 70, left: 40};
-        const width = (container.node().clientWidth || 300) - margin.left - margin.right;
-        const height = 280 - margin.top - margin.bottom;
-        const svg = container.append("svg")
-          .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.top + margin.bottom)
-          .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-        const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, width]).padding(0.2);
-        const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value)]).nice().range([height, 0]);
-        svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x))
-          .selectAll("text").attr("transform", "rotate(-35)").style("text-anchor", "end")
-          .attr("fill", "#111827").attr("font-size", "11px");
-        svg.append("g").call(d3.axisLeft(y).ticks(5)).selectAll("text").attr("fill", "#111827");
-        svg.selectAll(".bar").data(data).enter().append("rect")
-          .attr("x", d => x(d.label)).attr("y", d => y(d.value))
-          .attr("width", x.bandwidth()).attr("height", d => height - y(d.value))
-          .attr("fill", color).attr("rx", 4);
-      }
-      
-      drawDonut("chartSat", [{label:"Très satisfait",value:17},{label:"Plutôt satisfait",value:11},{label:"Neutre",value:4},{label:"Plutôt insatisfait",value:1}], ["#4ade80","#86efac","#fbbf24","#f87171"]);
-      drawDonut("chartMembre", [{label:"Tout à fait",value:18},{label:"Plutôt oui",value:12},{label:"Plutôt non",value:3}], ["#4ade80","#86efac","#fbbf24"]);
-      drawBar("chartAmbiance", [{label:"Très bonne",value:9},{label:"Plutôt bonne",value:18},{label:"À améliorer",value:5},{label:"Mauvaise",value:1}], "#38bdf8");
-      drawDonut("chartAge", [{label:"61-80",value:13},{label:"18-25",value:8},{label:"41-60",value:6},{label:"14-17",value:4},{label:"26-40",value:2}], ["#38bdf8","#818cf8","#c084fc","#f472b6","#fb7185"]);
-      drawBar("chartFreq", [{label:"Quelques/an",value:9},{label:"Plusieurs/sem",value:8},{label:"1/semaine",value:5},{label:"Très rare",value:4},{label:"Quelques/mois",value:4},{label:"Presque WE",value:2}], "#818cf8");
-      
-      console.log('Charts drawn');
-    } catch(e) { console.error(e); }
-  }, 500);
-});
-</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha384-Yv5O+t3uE3hunW8uyrbpPW3iw6/5/Y7HitWJBLgqfMoA36NogMmy+8wWZMpn3HWc" crossorigin="anonymous"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

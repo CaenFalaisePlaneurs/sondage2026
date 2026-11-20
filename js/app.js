@@ -2,7 +2,6 @@
 
 let chartTheme = 'dark';
 let currentTab = 'synthese';
-let exporting = false;
 let tooltip = null;
 
 const satData = [
@@ -327,159 +326,20 @@ function redrawCharts(animate) {
   drawBar('chartFreq', freqData, '#818cf8', motion);
 }
 
-function setStatus(message) {
-  const status = document.getElementById('pdfStatus');
-  if (status) status.textContent = message || '';
-}
-
 function applyVisibleTab() {
   document.querySelectorAll('.tab-content').forEach((el) => {
     el.classList.toggle('active', el.id === currentTab);
   });
 }
 
-function freezeCharts() {
-  const jobs = [...document.querySelectorAll('#report .chart-container svg')].map((svg) => {
-    const clone = svg.cloneNode(true);
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-    const w = Math.ceil(svg.getBoundingClientRect().width) || Number(svg.getAttribute('width')) || 300;
-    const h = Math.ceil(svg.getBoundingClientRect().height) || Number(svg.getAttribute('height')) || 200;
-    clone.setAttribute('width', String(w));
-    clone.setAttribute('height', String(h));
-    const xml = new XMLSerializer().serializeToString(clone);
-    const url = URL.createObjectURL(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }));
-    return new Promise((resolve) => {
-      const source = new Image();
-      source.onload = () => {
-        const scale = 2;
-        const canvas = document.createElement('canvas');
-        canvas.width = w * scale;
-        canvas.height = h * scale;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-        const shot = new Image();
-        shot.alt = '';
-        shot.style.width = `${w}px`;
-        shot.style.height = `${h}px`;
-        shot.style.display = 'block';
-        shot.style.margin = '0 auto';
-        shot.onload = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        shot.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        svg.replaceWith(shot);
-        shot.src = canvas.toDataURL('image/png');
-      };
-      source.onerror = () => {
-        URL.revokeObjectURL(url);
-        resolve();
-      };
-      source.src = url;
-    });
-  });
-  return Promise.all(jobs);
-}
-
-function restoreAfterExport(scrollY) {
-  document.body.classList.remove('pdf-export');
-  const report = document.getElementById('report');
-  if (report) report.style.width = '';
-  chartTheme = 'dark';
-  applyVisibleTab();
-  redrawCharts(true);
-  const overlay = document.getElementById('pdfOverlay');
-  if (overlay) overlay.hidden = true;
-  const btn = document.getElementById('pdfBtn');
-  if (btn) btn.disabled = false;
-  exporting = false;
-  window.scrollTo(0, scrollY);
-}
-
-async function telechargerPDF() {
-  if (exporting) return;
-  const btn = document.getElementById('pdfBtn');
-  if (typeof html2pdf !== 'function') {
-    setStatus('Le téléchargement PDF est indisponible pour le moment.');
-    return;
-  }
-  exporting = true;
-  if (btn) btn.disabled = true;
-  setStatus('Préparation du PDF…');
-  const overlay = document.getElementById('pdfOverlay');
-  if (overlay) overlay.hidden = false;
-  hideTooltip();
-  const scrollY = window.scrollY;
-  window.scrollTo(0, 0);
-
-  const report = document.getElementById('report');
-  document.body.classList.add('pdf-export');
-  chartTheme = 'light';
-  document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('active'));
-  if (report) report.style.width = '800px';
-  renderLegends();
-  redrawCharts();
-  await freezeCharts();
-
-  const opt = {
-    margin: [12, 12, 16, 12],
-    filename: 'sondage-club-2026.pdf',
-    image: { type: 'jpeg', quality: 1 },
-    html2canvas: {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      scrollX: 0,
-      scrollY: 0,
-      windowWidth: 800
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: {
-      mode: ['css', 'legacy'],
-      avoid: ['.stat-card', '.theme', '.q-block', '.actions', '.chart-block', '.callout']
-    }
-  };
-
-  try {
-    const pdf = await html2pdf().set(opt).from(report).toPdf().get('pdf');
-    const total = pdf.internal.getNumberOfPages();
-    for (let i = 1; i <= total; i += 1) {
-      pdf.setPage(i);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(9);
-      pdf.setTextColor(90);
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      pdf.text(
-        `Sondage club 2026 - Caen Falaise Planeurs - ${i}/${total}`,
-        pageWidth / 2,
-        pageHeight - 8,
-        { align: 'center' }
-      );
-    }
-    pdf.save('sondage-club-2026.pdf');
-    setStatus('');
-  } catch (error) {
-    console.error(error);
-    setStatus('Le PDF n’a pas pu être généré. Réessayez.');
-  } finally {
-    restoreAfterExport(scrollY);
-  }
-}
-
 function preparePrintTheme() {
-  if (exporting) return;
   chartTheme = 'light';
   document.body.classList.add('pdf-export');
+  document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('active'));
   redrawCharts();
 }
 
 function restoreScreenTheme() {
-  if (exporting) return;
   document.body.classList.remove('pdf-export');
   chartTheme = 'dark';
   applyVisibleTab();
@@ -488,7 +348,7 @@ function restoreScreenTheme() {
 
 let resizeTimer;
 window.addEventListener('resize', () => {
-  if (exporting || currentTab !== 'synthese') return;
+  if (currentTab !== 'synthese') return;
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(redrawCharts, 150);
 });
@@ -505,8 +365,5 @@ window.addEventListener('load', () => {
   } else {
     renderLegends();
     redrawCharts(true);
-  }
-  if (typeof html2pdf !== 'function') {
-    setStatus('Export PDF indisponible : rechargez la page.');
   }
 });

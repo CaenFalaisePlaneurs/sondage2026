@@ -42,15 +42,15 @@
   .legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
   .swatch { width: 0.65rem; height: 0.65rem; border-radius: 2px; flex-shrink: 0; }
   .callout { background: #1e3a5f; }
-  .pdf-status { min-height: 1.25rem; margin: 0.55rem 0 0; font-size: 0.9rem; color: #e0f2fe; }
-  .pdf-overlay { position: fixed; inset: 0; z-index: 20; background: rgba(15, 23, 42, 0.78); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; padding: 1rem; text-align: center; }
-  .pdf-overlay[hidden] { display: none !important; }
-  .pdf-btn:disabled { opacity: 0.65; cursor: progress; }
+  .online-link { display: none; }
+  .contact-link { margin: 0.8rem 0 0; }
+  .contact-link a { color: inherit; }
   .tab:focus-visible, .pdf-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
   #report { max-width: 1100px; margin: 0 auto; }
   .chart-title { text-align: center; font-size: 1rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; }
   footer { text-align: center; font-size: 0.85rem; margin-top: 3rem; padding: 1rem; }
   footer .credit { opacity: 0.6; margin: 0.35rem 0 0; }
+  footer .credit a { color: inherit; }
   .theme { border-bottom: 1px solid #334155; padding: 1rem 0; }
   .theme:last-child { border: none; }
   .tooltip { position: absolute; background: #0f172a; color: white; padding: 8px 12px; border-radius: 6px; font-size: 13px; pointer-events: none; border: 1px solid #38bdf8; opacity: 0; }
@@ -89,7 +89,7 @@
   @media print {
     body { background: #fff !important; color: #111827 !important; padding: 0; }
     header { background: #fff !important; color: #111827 !important; }
-    .tabs, .pdf-btn, .pdf-status, .pdf-overlay, .tooltip { display: none !important; }
+    .tabs, .pdf-btn, .tooltip { display: none !important; }
     .tab-content { display: block !important; }
     .card, .callout { background: #fff !important; color: #111827 !important; box-shadow: none; border: 1px solid #ddd; }
     .logo svg path { fill: #08003B !important; }
@@ -97,13 +97,17 @@
     .card h2, .q-block h3, .actions h3, .chart-title { color: #0c4a6e !important; }
     .actions { background: #f0f9ff !important; color: #111827 !important; }
     .bar-track { background: #e5e7eb !important; }
-    .legend, .legend-item, .subtitle, footer, footer .credit { color: #111827 !important; opacity: 1 !important; }
+    .legend, .legend-item, .subtitle, footer, footer .credit, footer .credit a { color: #111827 !important; opacity: 1 !important; }
     .legend { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; }
     .swatch { width: 0.9rem; height: 0.9rem; border: 1px solid rgba(17, 24, 39, 0.25); }
     .grid { grid-template-columns: 1fr !important; }
+    .stats-grid { grid-template-columns: 1fr 1fr !important; }
+    .stats-grid .stat-card:last-child { grid-column: 1 / -1; }
     #detail { break-before: page; page-break-before: always; display: block !important; }
     .theme, .q-block, .actions, .stat-card, .chart-block, .callout { break-inside: avoid; page-break-inside: avoid; }
     #detail .bar-fill { animation: none !important; transform: none !important; }
+    .online-link, .contact-link { display: block !important; margin-top: 0.8rem; }
+    .online-link a, .contact-link a { color: #0c4a6e !important; }
   }
 
   body.pdf-export { background: #fff; color: #111827; padding: 0; }
@@ -111,7 +115,6 @@
   body.pdf-export h1 { color: #0f172a; }
   body.pdf-export .tabs,
   body.pdf-export .pdf-btn,
-  body.pdf-export .pdf-status,
   body.pdf-export .tooltip { display: none !important; }
   body.pdf-export .tab-content { display: block !important; }
   body.pdf-export .card,
@@ -128,26 +131,23 @@
   body.pdf-export .legend-item,
   body.pdf-export .subtitle,
   body.pdf-export footer,
-  body.pdf-export footer .credit { color: #111827; opacity: 1; }
+  body.pdf-export footer .credit,
+  body.pdf-export footer .credit a { color: #111827; opacity: 1; }
   body.pdf-export .legend {
     display: flex; flex-direction: column; align-items: flex-start;
     gap: 0.35rem; margin-top: 0.7rem; font-size: 0.95rem; line-height: 1.35;
   }
   body.pdf-export .swatch { width: 0.9rem; height: 0.9rem; border: 1px solid rgba(17, 24, 39, 0.25); }
   body.pdf-export .grid { grid-template-columns: 1fr; }
+  body.pdf-export .stats-grid { grid-template-columns: 1fr 1fr; }
+  body.pdf-export .stats-grid .stat-card:last-child { grid-column: 1 / -1; }
   body.pdf-export .bar-row { font-size: 1rem; }
   body.pdf-export .bar-track { height: 20px; }
-  body.pdf-export .stat-card:has(#chartSat),
-  body.pdf-export .stat-card:has(#chartMembre),
   body.pdf-export .chart-block:has(#chartAge) {
     display: grid; grid-template-columns: 240px minmax(0, 1fr);
     column-gap: 1.2rem; align-items: center;
   }
-  body.pdf-export .stat-card:has(#chartSat) > :not(.chart-container):not(.legend),
-  body.pdf-export .stat-card:has(#chartMembre) > :not(.chart-container):not(.legend),
   body.pdf-export .chart-block:has(#chartAge) > :not(.chart-container):not(.legend) { grid-column: 1 / -1; }
-  body.pdf-export .stat-card:has(#chartSat) > .legend,
-  body.pdf-export .stat-card:has(#chartMembre) > .legend,
   body.pdf-export .chart-block:has(#chartAge) > .legend { margin-top: 0; }
   body.pdf-export #detail { break-before: page; page-break-before: always; display: block !important; }
   body.pdf-export .theme,
@@ -157,9 +157,13 @@
   body.pdf-export .chart-block,
   body.pdf-export .callout { break-inside: avoid; page-break-inside: avoid; }
   body.pdf-export #detail .bar-fill { animation: none !important; transform: none !important; }
+  body.pdf-export .online-link,
+  body.pdf-export .contact-link { display: block; margin-top: 0.8rem; }
+  body.pdf-export .online-link a,
+  body.pdf-export .contact-link a { color: #0c4a6e; }
   .pdf-btn { 
     background: #38bdf8; color: #0f172a; border: none; padding: 10px 16px;
-    border-radius: 8px; font-weight: bold; cursor: pointer;
+    border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none;
     display: inline-flex; align-items: center; gap: 8px; margin-top: 1rem;
   }
   .pdf-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -192,6 +196,13 @@
 
 <!-- ONGLET SYNTHÈSE -->
 <div id="synthese" class="tab-content active">
+  <div class="card intro">
+    <h2>Le sondage</h2>
+    <p>À l’été 2026, le Caen Falaise Planeurs a interrogé ses membres sur leur place dans le club. Le questionnaire a été mis en ligne le 2 août 2026. Les 33 réponses réunies ici ont été enregistrées du 3 août au 4 octobre 2026.</p>
+    <p>Les questions portaient sur le profil et la fréquentation, la satisfaction, le sentiment d’appartenance, l’ambiance, la liberté de proposer une idée, la communication, la gouvernance et l’envie de s’impliquer davantage. Cette synthèse est anonyme : les réponses libres ont été reformulées, et aucune phrase d’origine n’est reproduite.</p>
+    <p class="online-link">Version en ligne : <a href="https://sondage2026.caenfalaiseplaneurs.fr/">https://sondage2026.caenfalaiseplaneurs.fr/</a></p>
+    <p class="contact-link">Une question sur ce sondage : <a href="mailto:contact@caenfalaiseplaneurs.fr?subject=%C3%80%20propos%20du%20sondage%20CFP%202026">contact@caenfalaiseplaneurs.fr</a></p>
+  </div>
   <div class="grid stats-grid">
     <div class="card stat-card">
       <h2>Satisfaction globale</h2>
@@ -423,9 +434,9 @@
 </div>
 
 <footer>
-  <p class="credit">Synthèse anonyme réalisée à partir des 33 réponses du sondage 2026 — Caen Falaise Planeurs.<br>
-  Visualisations D3.js. Aucun texte libre n’a été reproduit tel quel.</p>
-  <button type="button" class="pdf-btn" id="pdfBtn" onclick="telechargerPDF()">
+  <p class="credit">Synthèse anonyme réalisée à partir des 33 réponses du sondage 2026 — <a href="https://caenfalaiseplaneurs.fr/">Caen Falaise Planeurs</a>.<br>
+  Aucun texte libre n’a été reproduit tel quel.</p>
+  <a class="pdf-btn" href="sondage-club-2026.pdf" download>
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
       <path d="M14 2v6h6"/>
@@ -433,19 +444,13 @@
       <path d="M8 17h8"/>
     </svg>
     Télécharger en PDF
-  </button>
-  <p id="pdfStatus" class="pdf-status" role="status"></p>
+  </a>
 </footer>
-</div>
-
-<div id="pdfOverlay" class="pdf-overlay" hidden>
-  <p>Préparation du PDF…</p>
 </div>
 
 <div class="tooltip" id="tooltip"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha384-Yv5O+t3uE3hunW8uyrbpPW3iw6/5/Y7HitWJBLgqfMoA36NogMmy+8wWZMpn3HWc" crossorigin="anonymous"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
